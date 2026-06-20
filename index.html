@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chess 3D</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main class="app">
+    <h1>Chess</h1>
+
+    <div class="layout">
+      <div class="board-wrap">
+        <div id="scene" class="scene" aria-label="3D chess board"></div>
+      </div>
+
+      <aside class="panel">
+        <div class="status" id="status">White to move</div>
+
+        <div class="controls">
+          <label class="control">
+            Opponent
+            <select id="mode">
+              <option value="human">Two players</option>
+              <option value="ai" selected>vs Computer</option>
+            </select>
+          </label>
+
+          <label class="control" id="sideControl">
+            Play as
+            <select id="side">
+              <option value="w" selected>White</option>
+              <option value="b">Black</option>
+            </select>
+          </label>
+
+          <label class="control" id="depthControl">
+            Difficulty
+            <select id="depth">
+              <option value="1">Easy</option>
+              <option value="2">Medium</option>
+              <option value="3" selected>Hard</option>
+            </select>
+          </label>
+
+          <label class="control">
+            Battle mode
+            <select id="battleMode">
+              <option value="on" selected>On</option>
+              <option value="off">Off</option>
+            </select>
+          </label>
+
+          <div class="buttons">
+            <button id="newGame">New Game</button>
+            <button id="undo">Undo</button>
+            <button id="flip">Flip</button>
+          </div>
+        </div>
+
+        <div class="moves-section">
+          <h2>Moves</h2>
+          <ol id="moveList" class="move-list"></ol>
+        </div>
+
+        <div class="captured">
+          <div class="captured-row" id="capturedWhite" aria-label="Black pieces captured"></div>
+          <div class="captured-row" id="capturedBlack" aria-label="White pieces captured"></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div class="overlay" id="promotion" hidden>
+    <div class="promotion-dialog">
+      <p>Promote to</p>
+      <div class="promotion-choices" id="promotionChoices"></div>
+    </div>
+  </div>
+
+  <script src="engine.js"></script>
+  <script src="ai.js"></script>
+  <script src="battle.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

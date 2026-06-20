@@ -1,0 +1,7 @@
+# Local Claude Code settings (personal)
+.claude/settings.local.json
+
+# OS / editor cruft
+.DS_Store
+*.log
+node_modules/
