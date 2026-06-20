@@ -7,9 +7,11 @@ capture fails and the attacking piece is destroyed instead.
 
 No build step, no dependencies to install. Just static files; Three.js loads from a CDN.
 
+**▶ Play it now: https://fcmartinez0.github.io/chessmon/**
+
 ## Play
 
-Open `index.html` in a browser, or serve the folder:
+Open the link above, open `index.html` in a browser, or serve the folder:
 
 ```bash
 python3 -m http.server 4178
