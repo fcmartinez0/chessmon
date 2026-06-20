@@ -21,8 +21,11 @@ const GLYPHS = {
 const TILE_H = 0.1;
 const PIECE_Y = TILE_H;          // pieces rest on the board surface
 const MARKER_Y = TILE_H + 0.02;
-const CAM_Y = 6.8;
-const CAM_Z = 7.2;
+// Camera framing differs by viewport: phones get a steeper, tighter angle so the
+// board fills the square instead of wasting the top third on empty backdrop.
+function camParams() {
+  return window.innerWidth <= 720 ? { y: 7.8, z: 5.6 } : { y: 6.8, z: 7.2 };
+}
 
 // --- DOM ---
 const container = document.getElementById('scene');
@@ -58,12 +61,13 @@ function battleEnabled() {
 
 // --- Three.js scene ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1b1b1f);
+// Transparent background so the CSS gradient on .scene shows through as a backdrop.
 
 const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-camera.position.set(0, CAM_Y, CAM_Z);
+camera.position.set(0, camParams().y, camParams().z);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setClearColor(0x000000, 0);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -634,7 +638,8 @@ function askPromotion(color, callback) {
 // --- View / camera ---
 function setView(side, withAnim) {
   viewSide = side;
-  const target = new THREE.Vector3(0, CAM_Y, side === 'w' ? CAM_Z : -CAM_Z);
+  const { y, z } = camParams();
+  const target = new THREE.Vector3(0, y, side === 'w' ? z : -z);
   if (!withAnim) {
     camera.position.copy(target);
     controls.update();
@@ -703,6 +708,7 @@ function onResize() {
   renderer.setSize(size, size, false);
   camera.aspect = 1;
   camera.updateProjectionMatrix();
+  setView(viewSide, false); // re-frame for the new viewport (desktop vs mobile)
 }
 window.addEventListener('resize', onResize);
 

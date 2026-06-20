@@ -16,18 +16,26 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background: var(--bg);
+  background: linear-gradient(180deg, #303036 0%, #232328 55%, #1a1a1e 100%);
+  background-attachment: fixed;
   color: var(--text);
   display: flex;
   justify-content: center;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .app {
   padding: 24px;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   width: 100%;
   max-width: 1000px;
 }
@@ -52,10 +60,10 @@ h1 {
 .scene {
   width: var(--board-size);
   height: var(--board-size);
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65);
-  background: radial-gradient(circle at 50% 25%, #34343c, #16161a);
+  background: radial-gradient(125% 95% at 50% 8%, #474a5a 0%, #2b2d38 42%, #15161c 100%);
   cursor: grab;
   touch-action: none;
 }
@@ -392,10 +400,128 @@ h1 {
 .move-btn.type-border-dragon { border-color: #6a4ad6; }
 
 @media (max-width: 720px) {
-  :root { --board-size: 92vmin; }
-  .layout { justify-content: center; }
-  .panel { max-width: none; }
-  .battle-menu { width: 52%; }
-  .sprite { font-size: 70px; }
-  .attacker .sprite { font-size: 78px; }
+  :root { --board-size: min(94vw, 62vh); }
+
+  .app { padding-left: 12px; padding-right: 12px; }
+
+  h1 {
+    font-size: 1.4rem;
+    margin: 0 0 10px;
+    text-align: center;
+  }
+
+  .layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .board-wrap { width: 100%; display: flex; justify-content: center; }
+  .scene { box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55); }
+
+  .panel {
+    width: 100%;
+    max-width: 520px;
+    min-width: 0;
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .status {
+    text-align: center;
+    font-size: 1.15rem;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+
+  /* Settings as a compact 2-column card grid with the label above the control. */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .control {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 9px 11px;
+    border-radius: 10px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .control select {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 0.95rem;
+  }
+  .buttons {
+    grid-column: 1 / -1;
+    margin-top: 2px;
+  }
+  .buttons button {
+    padding: 13px 4px;
+    font-size: 0.92rem;
+    border-radius: 10px;
+  }
+
+  /* Recent moves as a horizontal strip instead of a tall list. */
+  .moves-section h2 { margin-bottom: 6px; }
+  .move-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-height: none;
+    gap: 4px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .move-list li {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border-radius: 6px;
+    padding: 4px 8px;
+  }
+  .move-list .mv { min-width: 0; margin-left: 6px; }
+
+  .captured-row { font-size: 1.5rem; }
+
+  /* --- Battle screen: portrait layout --- */
+  .battle-stage {
+    width: 96vw;
+    height: min(90vh, 760px);
+    border-radius: 16px;
+  }
+  .battle-stage::after { bottom: 188px; }
+
+  .combatant { gap: 10px; }
+  .combatant.defender { top: 16px; right: 14px; }
+  .combatant.attacker { bottom: 206px; left: 14px; }
+  .info { min-width: 0; width: 168px; padding: 7px 10px; }
+  .info .name { font-size: 0.86rem; }
+  .platform { width: 86px; height: 56px; }
+  .sprite { font-size: 64px; }
+  .attacker .sprite { font-size: 72px; }
+
+  .battle-panel {
+    flex-direction: column;
+    height: auto;
+    min-height: 184px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  .battle-msg {
+    padding: 16px 18px;
+    min-height: 58px;
+    font-size: 1.08rem;
+  }
+  .battle-menu {
+    width: 100%;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+  .move-btn { padding: 13px 12px; }
+  .move-name { font-size: 0.98rem; }
 }
