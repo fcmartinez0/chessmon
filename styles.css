@@ -220,7 +220,16 @@ h1 {
   opacity: 0;
   transition: opacity 0.18s ease;
 }
-.battle-overlay.show { opacity: 1; }
+.battle-overlay.show {
+  opacity: 1;
+  animation: battleFlashIn 0.45s ease forwards;
+}
+@keyframes battleFlashIn {
+  0%   { background: rgba(255,255,255,0.85); }
+  25%  { background: rgba(255,255,255,0.0);  }
+  40%  { background: rgba(8, 8, 12, 0.6);    }
+  100% { background: rgba(8, 8, 12, 0.82);   }
+}
 
 .battle-stage {
   position: relative;

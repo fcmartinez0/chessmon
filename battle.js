@@ -15,73 +15,52 @@
     bk: '♚', bq: '♛', br: '♜', bb: '♝', bn: '♞', bp: '♟',
   };
 
-  // Per-piece battle profile: elemental type, stats, attack moves, and defensive counter moves.
+  // Build a name→move lookup from the external moves.js database.
+  // accuracy is stored as 0–100 in moves.js; convert to 0–1 for internal use.
+  const MOVES = (function () {
+    const map = new Map();
+    for (const m of (window.ChessMoves || [])) {
+      map.set(m.name, { name: m.name, type: m.type, power: m.power, accuracy: m.accuracy / 100 });
+    }
+    return map;
+  })();
+
+  function lookupMoves(names) {
+    return names.map((n) => MOVES.get(n)).filter(Boolean);
+  }
+
+  // Per-piece battle profile: stats and move-name references into the moves database.
+  // To change which moves a piece uses, edit moves.js and update the name lists here.
   const PROFILE = {
     p: {
       name: 'Pawn', type: 'Normal', hp: 32, atk: 12, def: 9, spd: 8,
-      moves: [
-        { name: 'Tackle', power: 18, type: 'Normal', accuracy: 1.00 },
-        { name: 'Pawn Storm', power: 24, type: 'Normal', accuracy: 0.90 },
-      ],
-      defMoves: [
-        { name: 'Brace', power: 12, type: 'Normal', accuracy: 1.00 },
-        { name: 'Last Stand', power: 30, type: 'Normal', accuracy: 0.70 },
-      ],
+      moves:    ['Tackle', 'Pawn Storm'],
+      defMoves: ['Brace', 'Last Stand'],
     },
     n: {
       name: 'Knight', type: 'Fighting', hp: 46, atk: 18, def: 12, spd: 17,
-      moves: [
-        { name: 'Fork Strike', power: 26, type: 'Fighting', accuracy: 0.90 },
-        { name: 'Gallop', power: 20, type: 'Normal', accuracy: 0.95 },
-      ],
-      defMoves: [
-        { name: 'Counter Jab', power: 22, type: 'Fighting', accuracy: 0.90 },
-        { name: 'Feint Strike', power: 28, type: 'Normal', accuracy: 0.80 },
-      ],
+      moves:    ['Fork Strike', 'Gallop'],
+      defMoves: ['Counter Jab', 'Feint Strike'],
     },
     b: {
       name: 'Bishop', type: 'Psychic', hp: 44, atk: 17, def: 11, spd: 19,
-      moves: [
-        { name: 'Diagonal Slash', power: 25, type: 'Psychic', accuracy: 0.90 },
-        { name: 'Pierce', power: 21, type: 'Normal', accuracy: 0.95 },
-      ],
-      defMoves: [
-        { name: 'Mind Shield', power: 20, type: 'Psychic', accuracy: 0.95 },
-        { name: 'Prism Counter', power: 28, type: 'Normal', accuracy: 0.80 },
-      ],
+      moves:    ['Diagonal Slash', 'Pierce'],
+      defMoves: ['Mind Shield', 'Prism Counter'],
     },
     r: {
       name: 'Rook', type: 'Rock', hp: 62, atk: 20, def: 18, spd: 6,
-      moves: [
-        { name: 'Castle Crush', power: 28, type: 'Rock', accuracy: 0.85 },
-        { name: 'Siege Slam', power: 21, type: 'Normal', accuracy: 0.95 },
-      ],
-      defMoves: [
-        { name: 'Fortify', power: 16, type: 'Rock', accuracy: 1.00 },
-        { name: 'Rampart Smash', power: 30, type: 'Normal', accuracy: 0.80 },
-      ],
+      moves:    ['Castle Crush', 'Siege Slam'],
+      defMoves: ['Fortify', 'Rampart Smash'],
     },
     q: {
       name: 'Queen', type: 'Fire', hp: 82, atk: 26, def: 16, spd: 14,
-      moves: [
-        { name: 'Royal Flame', power: 32, type: 'Fire', accuracy: 0.85 },
-        { name: 'Court Sweep', power: 24, type: 'Normal', accuracy: 0.95 },
-      ],
-      defMoves: [
-        { name: 'Imperial Guard', power: 22, type: 'Fire', accuracy: 0.95 },
-        { name: 'Majestic Counter', power: 32, type: 'Normal', accuracy: 0.80 },
-      ],
+      moves:    ['Royal Flame', 'Court Sweep'],
+      defMoves: ['Imperial Guard', 'Majestic Counter'],
     },
     k: {
       name: 'King', type: 'Dragon', hp: 72, atk: 20, def: 20, spd: 10,
-      moves: [
-        { name: "Sovereign's Wrath", power: 30, type: 'Dragon', accuracy: 0.85 },
-        { name: 'Royal Decree', power: 22, type: 'Normal', accuracy: 1.00 },
-      ],
-      defMoves: [
-        { name: 'Royal Defiance', power: 26, type: 'Dragon', accuracy: 0.90 },
-        { name: "Desperate Stand", power: 35, type: 'Normal', accuracy: 0.70 },
-      ],
+      moves:    ["Sovereign's Wrath", 'Royal Decree'],
+      defMoves: ['Royal Defiance', 'Desperate Stand'],
     },
   };
 
@@ -158,6 +137,7 @@
 
   function makeCombatant(spec, role) {
     const p = PROFILE[spec.type];
+    const moveNames = role === 'defender' ? p.defMoves : p.moves;
     return {
       color: spec.color,
       type: spec.type,
@@ -167,7 +147,7 @@
       maxhp: p.hp,
       hp: p.hp,
       stats: p,
-      moves: role === 'defender' ? p.defMoves : p.moves,
+      moves: lookupMoves(moveNames),
     };
   }
 

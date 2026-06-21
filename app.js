@@ -539,9 +539,11 @@ function playMove(move) {
 
   const isCapture = !!(move.captured || move.enPassant);
   if (battleEnabled() && isCapture) {
-    runBattle(move).then((attackerWon) => {
-      if (attackerWon) resolveWin(move);
-      else resolveLoss(move);
+    animateBattleCharge(move).then(() => {
+      runBattle(move).then((attackerWon) => {
+        if (attackerWon) resolveWin(move);
+        else resolveLoss(move);
+      });
     });
   } else {
     resolveWin(move);
@@ -612,6 +614,38 @@ function triggerAI() {
     if (!move) { refreshUI(); return; }
     playMove(move);
   }, 30);
+}
+
+// Pre-battle: attacker leaps toward the defender and bounces back, defender shakes on impact.
+function animateBattleCharge(move) {
+  animating = true;
+  const attMesh = meshAt.get(move.from);
+  const defSquare = move.enPassant ? move.capturedSquare : move.to;
+  const defMesh = meshAt.get(defSquare);
+  if (!attMesh) { animating = false; return Promise.resolve(); }
+
+  const from = worldOf(move.from);
+  const to = worldOf(move.to);
+  const defPos = worldOf(defSquare);
+
+  // Big arcing leap toward the target and back (sin arc peaks at midpoint, returns to 0).
+  return animate(500, (t) => {
+    const reach = Math.sin(t * Math.PI);
+    attMesh.position.x = from.x + (to.x - from.x) * reach;
+    attMesh.position.z = from.z + (to.z - from.z) * reach;
+    attMesh.position.y = PIECE_Y + Math.sin(t * Math.PI) * 1.4;
+  }).then(() => {
+    attMesh.position.set(from.x, PIECE_Y, from.z);
+    if (!defMesh) { animating = false; return Promise.resolve(); }
+    return animate(220, (t) => {
+      const shock = Math.sin(t * Math.PI * 5) * 0.08 * (1 - t);
+      defMesh.position.x = defPos.x + shock;
+      defMesh.position.z = defPos.z + shock;
+    }).then(() => {
+      defMesh.position.set(defPos.x, PIECE_Y, defPos.z);
+      animating = false;
+    });
+  });
 }
 
 function animateFailedCapture(move) {
