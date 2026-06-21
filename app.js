@@ -17,6 +17,116 @@ const GLYPHS = {
   bk: '♚', bq: '♛', br: '♜', bb: '♝', bn: '♞', bp: '♟',
 };
 
+// --- Type variant system ---
+const PIECE_VARIANTS = {
+  p: ['Normal', 'Fire', 'Grass'],
+  n: ['Fighting', 'Water', 'Normal'],
+  b: ['Psychic', 'Grass', 'Normal'],
+  r: ['Rock', 'Water', 'Fire'],
+  q: ['Water', 'Fire', 'Grass', 'Dragon', 'Psychic'],
+  k: ['Dragon', 'Fire', 'Normal'],
+};
+
+const TYPE_COLORS = {
+  Normal: 0xa8a878, Fighting: 0xc03028, Psychic: 0xd6468a,
+  Rock: 0x9a7d3a, Fire: 0xe8702a, Dragon: 0x6a4ad6,
+  Water: 0x6890f0, Grass: 0x78c850,
+};
+
+const DEX_ALL = [
+  { piece: 'p', name: 'Pawn',   variants: ['Normal', 'Fire', 'Grass'] },
+  { piece: 'n', name: 'Knight', variants: ['Fighting', 'Water', 'Normal'] },
+  { piece: 'b', name: 'Bishop', variants: ['Psychic', 'Grass', 'Normal'] },
+  { piece: 'r', name: 'Rook',   variants: ['Rock', 'Water', 'Fire'] },
+  { piece: 'q', name: 'Queen',  variants: ['Water', 'Fire', 'Grass', 'Dragon', 'Psychic'] },
+  { piece: 'k', name: 'King',   variants: ['Dragon', 'Fire', 'Normal'] },
+];
+const DEX_TOTAL = DEX_ALL.reduce((s, e) => s + e.variants.length, 0);
+
+let variantBoard = new Array(64).fill(null); // elemental type variant per square
+let initVariantSnap = null;                  // snapshot after new game (for undo replay)
+let pokedex = new Set(JSON.parse(localStorage.getItem('chessDex') || '[]'));
+
+function randomVariantFor(pieceType) {
+  const opts = PIECE_VARIANTS[pieceType];
+  return opts ? opts[Math.floor(Math.random() * opts.length)] : 'Normal';
+}
+
+function initVariants() {
+  variantBoard = new Array(64).fill(null);
+  for (let i = 0; i < 64; i++) {
+    if (game.board[i]) variantBoard[i] = randomVariantFor(typeOf(game.board[i]));
+  }
+  initVariantSnap = variantBoard.slice();
+}
+
+function applyVariantMove(move) {
+  if (move.enPassant) variantBoard[move.capturedSquare] = null;
+  variantBoard[move.to] = variantBoard[move.from];
+  variantBoard[move.from] = null;
+  if (move.castle) {
+    const homeRow = colorOf(move.piece) === 'w' ? 7 : 0;
+    const rf = move.castle === 'K' ? homeRow * 8 + 7 : homeRow * 8 + 0;
+    const rt = move.castle === 'K' ? homeRow * 8 + 5 : homeRow * 8 + 3;
+    variantBoard[rt] = variantBoard[rf];
+    variantBoard[rf] = null;
+  }
+}
+
+function rebuildVariantsFromHistory() {
+  if (!initVariantSnap) return;
+  variantBoard = initVariantSnap.slice();
+  for (const move of game.history) {
+    if (move.battleLost) {
+      variantBoard[move.from] = null;
+    } else {
+      if (move.enPassant) variantBoard[move.capturedSquare] = null;
+      variantBoard[move.to] = variantBoard[move.from];
+      variantBoard[move.from] = null;
+      if (move.castle) {
+        const homeRow = colorOf(move.piece) === 'w' ? 7 : 0;
+        const rf = move.castle === 'K' ? homeRow * 8 + 7 : homeRow * 8 + 0;
+        const rt = move.castle === 'K' ? homeRow * 8 + 5 : homeRow * 8 + 3;
+        variantBoard[rt] = variantBoard[rf];
+        variantBoard[rf] = null;
+      }
+    }
+  }
+}
+
+function addToDex(pieceType, variantType) {
+  if (!variantType || !pieceType) return;
+  const key = pieceType + '_' + variantType;
+  if (pokedex.has(key)) return;
+  pokedex.add(key);
+  try { localStorage.setItem('chessDex', JSON.stringify([...pokedex])); } catch (_) {}
+  renderDex();
+}
+
+function renderDex() {
+  const grid = document.getElementById('dexGrid');
+  const countEl = document.getElementById('dexCount');
+  if (!grid) return;
+  if (countEl) countEl.textContent = pokedex.size + ' / ' + DEX_TOTAL;
+  grid.innerHTML = '';
+  for (const entry of DEX_ALL) {
+    const row = document.createElement('div');
+    row.className = 'dex-row';
+    for (const v of entry.variants) {
+      const key = entry.piece + '_' + v;
+      const found = pokedex.has(key);
+      const cell = document.createElement('div');
+      cell.className = 'dex-entry' + (found ? ' found' : ' unknown');
+      cell.title = found ? entry.name + ' — ' + v : '???';
+      cell.innerHTML =
+        `<span class="dex-glyph">${GLYPHS['w' + entry.piece]}</span>` +
+        `<span class="dex-type type-${v.toLowerCase()}">${found ? v : '?'}</span>`;
+      row.appendChild(cell);
+    }
+    grid.appendChild(row);
+  }
+}
+
 // --- Constants ---
 const TILE_H = 0.1;
 const PIECE_Y = TILE_H;          // pieces rest on the board surface
@@ -279,9 +389,23 @@ function resetPieces() {
   }
 }
 
+function addVariantRing(mesh, variantType) {
+  const color = TYPE_COLORS[variantType];
+  if (!color) return;
+  const geo = new THREE.TorusGeometry(0.31, 0.04, 8, 32);
+  const mat = new THREE.MeshStandardMaterial({
+    color, emissive: new THREE.Color(color), emissiveIntensity: 0.55,
+  });
+  const ring = new THREE.Mesh(geo, mat);
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = 0.01; // just above board surface, relative to piece group
+  mesh.add(ring);          // child of piece — moves and scales with it automatically
+}
+
 function addPieceMesh(index, type, color) {
   const g = makePiece(type, color);
   g.position.copy(worldOf(index));
+  if (variantBoard[index]) addVariantRing(g, variantBoard[index]);
   piecesGroup.add(g);
   meshAt.set(index, g);
   return g;
@@ -561,9 +685,10 @@ function runBattle(move) {
   statusEl.textContent = 'Battle!';
   const attackerColor = colorOf(move.piece);
   const defenderPiece = move.captured;
+  const defSquare = move.enPassant ? move.capturedSquare : move.to;
   return window.ChessBattle.run({
-    attacker: { color: attackerColor, type: typeOf(move.piece) },
-    defender: { color: colorOf(defenderPiece), type: typeOf(defenderPiece) },
+    attacker: { color: attackerColor, type: typeOf(move.piece), variant: variantBoard[move.from] },
+    defender: { color: colorOf(defenderPiece), type: typeOf(defenderPiece), variant: variantBoard[defSquare] },
     attackerHuman: isHumanCombatant(attackerColor),
     defenderHuman: isHumanCombatant(colorOf(defenderPiece)),
   }).then((won) => { inBattle = false; return won; });
@@ -571,6 +696,9 @@ function runBattle(move) {
 
 // Attacker won the battle: the capture proceeds as a normal move.
 function resolveWin(move) {
+  const defSquare = move.enPassant ? move.capturedSquare : move.to;
+  if (move.captured) addToDex(typeOf(move.captured), variantBoard[defSquare]);
+  applyVariantMove(move);
   game.makeMove(move);
   lastMove = { from: move.from, to: move.to };
   animateMove(move).then(afterMove);
@@ -578,6 +706,7 @@ function resolveWin(move) {
 
 // Attacker lost the battle: the capturing piece is destroyed; the move fails.
 function resolveLoss(move) {
+  variantBoard[move.from] = null; // attacker's variant is lost
   game.makeFailedCapture(move);
   lastMove = { from: move.from, to: move.to };
   animateFailedCapture(move).then(afterMove);
@@ -707,7 +836,9 @@ function newGame() {
   inBattle = false;
   customOver = null;
   clearMarkers();
+  initVariants();
   resetPieces();
+  renderDex();
   setView(isAImode() && humanColor() === 'b' ? 'b' : 'w', false);
   refreshUI();
   if (isAImode() && game.turn === aiColor()) triggerAI();
@@ -720,6 +851,7 @@ document.getElementById('undo').addEventListener('click', () => {
   customOver = null;
   game.undo();
   if (isAImode() && game.history.length && game.turn === aiColor()) game.undo();
+  rebuildVariantsFromHistory();
   selected = null;
   legalForSelected = [];
   clearMarkers();

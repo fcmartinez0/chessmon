@@ -29,49 +29,72 @@
     return names.map((n) => MOVES.get(n)).filter(Boolean);
   }
 
-  // Per-piece battle profile: stats and move-name references into the moves database.
-  // To change which moves a piece uses, edit moves.js and update the name lists here.
+  // Per-piece battle profile. Stats are shared across all variants;
+  // variantMoves maps each elemental variant to its type, attack moves, and defense moves.
+  // Edit moves.js to tune move stats. Edit the name lists below to swap which moves each variant uses.
   const PROFILE = {
     p: {
-      name: 'Pawn', type: 'Normal', hp: 32, atk: 12, def: 9, spd: 8,
-      moves:    ['Tackle', 'Pawn Storm'],
-      defMoves: ['Brace', 'Last Stand'],
+      name: 'Pawn', hp: 32, atk: 12, def: 9, spd: 8,
+      variantMoves: {
+        Normal: { type: 'Normal',  moves: ['Tackle', 'Pawn Storm'],    defMoves: ['Brace', 'Last Stand'] },
+        Fire:   { type: 'Fire',    moves: ['Ember Charge', 'Pawn Storm'], defMoves: ['Flame Guard', 'Last Stand'] },
+        Grass:  { type: 'Grass',   moves: ['Seed Poke', 'Pawn Storm'],  defMoves: ['Thorn Shield', 'Last Stand'] },
+      },
     },
     n: {
-      name: 'Knight', type: 'Fighting', hp: 46, atk: 18, def: 12, spd: 17,
-      moves:    ['Fork Strike', 'Gallop'],
-      defMoves: ['Counter Jab', 'Feint Strike'],
+      name: 'Knight', hp: 46, atk: 18, def: 12, spd: 17,
+      variantMoves: {
+        Fighting: { type: 'Fighting', moves: ['Fork Strike', 'Gallop'],  defMoves: ['Counter Jab', 'Feint Strike'] },
+        Water:    { type: 'Water',    moves: ['Aqua Rush', 'Gallop'],    defMoves: ['Water Parry', 'Feint Strike'] },
+        Normal:   { type: 'Normal',   moves: ['Quick Strike', 'Gallop'], defMoves: ['Dodge Roll', 'Feint Strike'] },
+      },
     },
     b: {
-      name: 'Bishop', type: 'Psychic', hp: 44, atk: 17, def: 11, spd: 19,
-      moves:    ['Diagonal Slash', 'Pierce'],
-      defMoves: ['Mind Shield', 'Prism Counter'],
+      name: 'Bishop', hp: 44, atk: 17, def: 11, spd: 19,
+      variantMoves: {
+        Psychic: { type: 'Psychic', moves: ['Diagonal Slash', 'Pierce'], defMoves: ['Mind Shield', 'Prism Counter'] },
+        Grass:   { type: 'Grass',   moves: ['Leaf Slash', 'Pierce'],     defMoves: ['Spore Guard', 'Prism Counter'] },
+        Normal:  { type: 'Normal',  moves: ['Swift Strike', 'Pierce'],   defMoves: ['Guard Up', 'Prism Counter'] },
+      },
     },
     r: {
-      name: 'Rook', type: 'Rock', hp: 62, atk: 20, def: 18, spd: 6,
-      moves:    ['Castle Crush', 'Siege Slam'],
-      defMoves: ['Fortify', 'Rampart Smash'],
+      name: 'Rook', hp: 62, atk: 20, def: 18, spd: 6,
+      variantMoves: {
+        Rock:  { type: 'Rock',  moves: ['Castle Crush', 'Siege Slam'], defMoves: ['Fortify', 'Rampart Smash'] },
+        Water: { type: 'Water', moves: ['Tidal Slam', 'Siege Slam'],   defMoves: ['Aqua Barrier', 'Rampart Smash'] },
+        Fire:  { type: 'Fire',  moves: ['Blaze Cannon', 'Siege Slam'], defMoves: ['Ember Wall', 'Rampart Smash'] },
+      },
     },
     q: {
-      name: 'Queen', type: 'Fire', hp: 82, atk: 26, def: 16, spd: 14,
-      moves:    ['Royal Flame', 'Court Sweep'],
-      defMoves: ['Imperial Guard', 'Majestic Counter'],
+      name: 'Queen', hp: 82, atk: 26, def: 16, spd: 14,
+      variantMoves: {
+        Fire:    { type: 'Fire',    moves: ['Royal Flame', 'Court Sweep'],   defMoves: ['Imperial Guard', 'Majestic Counter'] },
+        Water:   { type: 'Water',   moves: ['Hydro Surge', 'Court Sweep'],   defMoves: ['Aqua Aura', 'Majestic Counter'] },
+        Grass:   { type: 'Grass',   moves: ['Verdant Gale', 'Court Sweep'],  defMoves: ['Petal Veil', 'Majestic Counter'] },
+        Dragon:  { type: 'Dragon',  moves: ['Sovereign Fury', 'Court Sweep'], defMoves: ['Dragon Veil', 'Majestic Counter'] },
+        Psychic: { type: 'Psychic', moves: ['Psionic Wave', 'Court Sweep'],  defMoves: ['Mental Fortress', 'Majestic Counter'] },
+      },
     },
     k: {
-      name: 'King', type: 'Dragon', hp: 72, atk: 20, def: 20, spd: 10,
-      moves:    ["Sovereign's Wrath", 'Royal Decree'],
-      defMoves: ['Royal Defiance', 'Desperate Stand'],
+      name: 'King', hp: 72, atk: 20, def: 20, spd: 10,
+      variantMoves: {
+        Dragon: { type: 'Dragon', moves: ["Sovereign's Wrath", 'Royal Decree'], defMoves: ['Royal Defiance', 'Desperate Stand'] },
+        Fire:   { type: 'Fire',   moves: ['Royal Inferno', 'Royal Decree'],      defMoves: ['Blazing Guard', 'Desperate Stand'] },
+        Normal: { type: 'Normal', moves: ['Rally', 'Royal Decree'],              defMoves: ['Steadfast', 'Desperate Stand'] },
+      },
     },
   };
 
   // Type effectiveness: EFF[attackingType][defendingType] = multiplier (default 1).
   const EFF = {
-    Normal: { Rock: 0.5 },
+    Normal:   { Rock: 0.5 },
     Fighting: { Normal: 2, Rock: 2, Psychic: 0.5, Dragon: 0.5 },
-    Psychic: { Fighting: 2, Dragon: 0.5 },
-    Rock: { Fire: 2, Fighting: 0.5 },
-    Fire: { Rock: 0.5, Dragon: 0.5, Psychic: 2 },
-    Dragon: { Dragon: 2, Psychic: 2, Fire: 2, Rock: 0.5 },
+    Psychic:  { Fighting: 2, Dragon: 0.5 },
+    Rock:     { Fire: 2, Water: 0.5, Fighting: 0.5 },
+    Fire:     { Rock: 0.5, Dragon: 0.5, Psychic: 2, Grass: 2, Water: 0.5 },
+    Dragon:   { Dragon: 2, Psychic: 2, Fire: 2, Rock: 0.5 },
+    Water:    { Fire: 2, Rock: 2, Grass: 0.5, Dragon: 0.5 },
+    Grass:    { Water: 2, Rock: 2, Fire: 0.5, Dragon: 0.5 },
   };
 
   function effectiveness(atkType, defType) {
@@ -137,7 +160,8 @@
 
   function makeCombatant(spec, role) {
     const p = PROFILE[spec.type];
-    const moveNames = role === 'defender' ? p.defMoves : p.moves;
+    const vm = p.variantMoves[spec.variant] || p.variantMoves[Object.keys(p.variantMoves)[0]];
+    const moveNames = role === 'defender' ? vm.defMoves : vm.moves;
     return {
       color: spec.color,
       type: spec.type,
@@ -146,7 +170,7 @@
       name: (spec.color === 'w' ? 'White ' : 'Black ') + p.name,
       maxhp: p.hp,
       hp: p.hp,
-      stats: p,
+      stats: { ...p, type: vm.type }, // elemental type comes from the variant
       moves: lookupMoves(moveNames),
     };
   }
