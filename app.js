@@ -582,9 +582,15 @@ function resolveLoss(move) {
 }
 
 function afterMove() {
-  // A failed capture can leave the mover's own king in check — that's fatal.
   const mover = game.turn === 'w' ? 'b' : 'w';
-  if (game.inCheck(mover)) {
+  const hist = game.history[game.history.length - 1];
+  if (hist && hist.kingFell) {
+    customOver = {
+      over: true,
+      result: game.turn,
+      reason: (mover === 'w' ? 'White' : 'Black') + "'s king fell in battle",
+    };
+  } else if (game.inCheck(mover)) {
     customOver = {
       over: true,
       result: game.turn,

@@ -370,7 +370,6 @@
       // En passant target.
       if (move.double) {
         const [fr, fc] = rc(move.from);
-        this.enPassant = idx((fr + move.to) / 16 | 0, fc); // midpoint row, same col
         const [tr] = rc(move.to);
         this.enPassant = idx((fr + tr) / 2, fc);
       } else {
@@ -456,6 +455,7 @@
 
       this.board[move.from] = null;
       if (type === 'k') {
+        move.kingFell = true;
         if (color === WHITE) { this.castling.wK = false; this.castling.wQ = false; }
         else { this.castling.bK = false; this.castling.bQ = false; }
       }
