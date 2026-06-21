@@ -161,7 +161,8 @@
   function makeCombatant(spec, role) {
     const p = PROFILE[spec.type];
     const vm = p.variantMoves[spec.variant] || p.variantMoves[Object.keys(p.variantMoves)[0]];
-    const moveNames = role === 'defender' ? vm.defMoves : vm.moves;
+    // Both sides get all 4 moves — no move disadvantage for defending.
+    const moveNames = [...vm.moves, ...vm.defMoves];
     return {
       color: spec.color,
       type: spec.type,
@@ -170,7 +171,8 @@
       name: (spec.color === 'w' ? 'White ' : 'Black ') + p.name,
       maxhp: p.hp,
       hp: p.hp,
-      stats: { ...p, type: vm.type }, // elemental type comes from the variant
+      // Defenders get a +3 def bonus to offset going second in a tie.
+      stats: { ...p, type: vm.type, def: p.def + (role === 'defender' ? 3 : 0) },
       moves: lookupMoves(moveNames),
     };
   }
@@ -204,16 +206,16 @@
     return { dmg, eff, crit: crit > 1, miss: false };
   }
 
-  // The AI picks the move with the best expected damage (factoring in accuracy).
+  // The AI scores all moves then picks from the top two with some randomness.
   function pickAiMove(attacker, defender) {
-    let best = attacker.moves[0];
-    let bestScore = -1;
-    for (const m of attacker.moves) {
-      const score = m.power * effectiveness(m.type, defender.stats.type) *
-        (m.type === attacker.stats.type ? 1.5 : 1) * (m.accuracy ?? 1);
-      if (score > bestScore) { bestScore = score; best = m; }
-    }
-    return best;
+    const scored = attacker.moves.map((m) => ({
+      move: m,
+      score: m.power * effectiveness(m.type, defender.stats.type) *
+        (m.type === attacker.stats.type ? 1.5 : 1) * (m.accuracy ?? 1),
+    })).sort((a, b) => b.score - a.score);
+    // 65 % chance to pick the best move, otherwise pick second-best if available.
+    const idx = (Math.random() < 0.65 || scored.length < 2) ? 0 : 1;
+    return scored[idx].move;
   }
 
   function run(opts) {
