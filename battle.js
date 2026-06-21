@@ -221,18 +221,26 @@
     const attacker = makeCombatant(opts.attacker, 'attacker');
     const defender = makeCombatant(opts.defender, 'defender');
 
-    paintSide(d.attacker, attacker);
-    paintSide(d.defender, defender);
+    // The human's piece is always displayed at the bottom (d.attacker slot).
+    // If the human is the defender (AI initiated the capture), flip the visual layout.
+    const flipDisplay = !opts.attackerHuman && opts.defenderHuman;
+    paintSide(d.attacker, flipDisplay ? defender : attacker);
+    paintSide(d.defender, flipDisplay ? attacker : defender);
     d.menu.innerHTML = '';
     d.overlay.hidden = false;
     d.overlay.classList.add('show');
 
-    // Faster combatant acts first; ties favor the attacker.
+    // Speed-based turn order — faster acts first; ties favor the attacker.
     let current = attacker.stats.spd >= defender.stats.spd ? 'attacker' : 'defender';
 
     const ctx = {
       attacker, defender,
       humans: { attacker: opts.attackerHuman, defender: opts.defenderHuman },
+      // Maps logical role → correct DOM ref, accounting for the possible flip.
+      domRef: {
+        attacker: flipDisplay ? d.defender : d.attacker,
+        defender: flipDisplay ? d.attacker : d.defender,
+      },
     };
 
     return new Promise((resolve) => {
@@ -248,7 +256,7 @@
       if (attacker.hp <= 0 || defender.hp <= 0) break;
       const actor = current === 'attacker' ? attacker : defender;
       const target = current === 'attacker' ? defender : attacker;
-      const targetRef = current === 'attacker' ? d.defender : d.attacker;
+      const targetRef = ctx.domRef[current === 'attacker' ? 'defender' : 'attacker'];
       const isHuman = ctx.humans[current];
 
       const isDefending = current === 'defender';

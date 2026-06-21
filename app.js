@@ -94,6 +94,84 @@ function rebuildVariantsFromHistory() {
   }
 }
 
+// --- Battle announcement overlay ---
+const PIECE_NAMES = { p: 'Pawn', n: 'Knight', b: 'Bishop', r: 'Rook', q: 'Queen', k: 'King' };
+
+let announceDom = null;
+function buildAnnounceOverlay() {
+  if (announceDom) return announceDom;
+  const el = document.createElement('div');
+  el.className = 'battle-announcement';
+  el.hidden = true;
+  el.innerHTML = `
+    <div class="announcement-card">
+      <div class="announcement-combatants">
+        <div class="ann-piece">
+          <span class="ann-glyph ann-atk-glyph"></span>
+          <span class="ann-type ann-atk-type type-badge"></span>
+        </div>
+        <span class="ann-vs">VS</span>
+        <div class="ann-piece">
+          <span class="ann-glyph ann-def-glyph"></span>
+          <span class="ann-type ann-def-type type-badge"></span>
+        </div>
+      </div>
+      <div class="announcement-title"></div>
+      <div class="announcement-notation"></div>
+    </div>`;
+  document.body.appendChild(el);
+  announceDom = {
+    el,
+    title:    el.querySelector('.announcement-title'),
+    notation: el.querySelector('.announcement-notation'),
+    atkGlyph: el.querySelector('.ann-atk-glyph'),
+    atkType:  el.querySelector('.ann-atk-type'),
+    defGlyph: el.querySelector('.ann-def-glyph'),
+    defType:  el.querySelector('.ann-def-type'),
+  };
+  return announceDom;
+}
+
+function showBattleAnnouncement(move) {
+  const ad = buildAnnounceOverlay();
+  const atkType = typeOf(move.piece);
+  const defType = typeOf(move.captured);
+  const atkColor = colorOf(move.piece);
+  const defColor = colorOf(move.captured);
+  const defSquare = move.enPassant ? move.capturedSquare : move.to;
+  const atkVariant = variantBoard[move.from] || '';
+  const defVariant = variantBoard[defSquare] || '';
+
+  ad.atkGlyph.textContent = GLYPHS[atkColor + atkType];
+  ad.defGlyph.textContent = GLYPHS[defColor + defType];
+  ad.atkType.textContent = atkVariant;
+  ad.atkType.className = 'ann-type ann-atk-type type-badge type-' + atkVariant.toLowerCase();
+  ad.defType.textContent = defVariant;
+  ad.defType.className = 'ann-type ann-def-type type-badge type-' + defVariant.toLowerCase();
+
+  ad.title.textContent = PIECE_NAMES[atkType] + ' challenges ' + PIECE_NAMES[defType] + '!';
+
+  const file = 'abcdefgh'[move.from % 8];
+  const dest = Game.squareName(move.to);
+  ad.notation.textContent = atkType === 'p' ? file + 'x' + dest : atkType.toUpperCase() + 'x' + dest;
+
+  ad.el.hidden = false;
+  void ad.el.offsetWidth; // force reflow so transition fires
+  ad.el.classList.add('show');
+
+  return new Promise((resolve) => {
+    let done = false;
+    const dismiss = () => {
+      if (done) return;
+      done = true;
+      ad.el.classList.remove('show');
+      setTimeout(() => { ad.el.hidden = true; resolve(); }, 320);
+    };
+    ad.el.addEventListener('click', dismiss, { once: true });
+    setTimeout(dismiss, 1900);
+  });
+}
+
 function addToDex(pieceType, variantType) {
   if (!variantType || !pieceType) return;
   const key = pieceType + '_' + variantType;
@@ -663,12 +741,13 @@ function playMove(move) {
 
   const isCapture = !!(move.captured || move.enPassant);
   if (battleEnabled() && isCapture) {
-    animateBattleCharge(move).then(() => {
-      runBattle(move).then((attackerWon) => {
+    animateBattleCharge(move)
+      .then(() => showBattleAnnouncement(move))
+      .then(() => runBattle(move))
+      .then((attackerWon) => {
         if (attackerWon) resolveWin(move);
         else resolveLoss(move);
       });
-    });
   } else {
     resolveWin(move);
   }
