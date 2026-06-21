@@ -32,9 +32,11 @@
   // Per-piece battle profile. Stats are shared across all variants;
   // variantMoves maps each elemental variant to its type, attack moves, and defense moves.
   // Edit moves.js to tune move stats. Edit the name lists below to swap which moves each variant uses.
+  // All pieces share the same stat budget (total 93) so piece type never predetermines a winner.
+  // Personality comes from stat distribution: bishops are fast/fragile, rooks are slow/tanky, etc.
   const PROFILE = {
     p: {
-      name: 'Pawn', hp: 32, atk: 12, def: 9, spd: 8,
+      name: 'Pawn', hp: 55, atk: 15, def: 12, spd: 11,
       variantMoves: {
         Normal: { type: 'Normal',  moves: ['Tackle', 'Pawn Storm'],    defMoves: ['Brace', 'Last Stand'] },
         Fire:   { type: 'Fire',    moves: ['Ember Charge', 'Pawn Storm'], defMoves: ['Flame Guard', 'Last Stand'] },
@@ -42,7 +44,7 @@
       },
     },
     n: {
-      name: 'Knight', hp: 46, atk: 18, def: 12, spd: 17,
+      name: 'Knight', hp: 55, atk: 18, def: 8, spd: 12,
       variantMoves: {
         Fighting: { type: 'Fighting', moves: ['Fork Strike', 'Gallop'],  defMoves: ['Counter Jab', 'Feint Strike'] },
         Water:    { type: 'Water',    moves: ['Aqua Rush', 'Gallop'],    defMoves: ['Water Parry', 'Feint Strike'] },
@@ -50,7 +52,7 @@
       },
     },
     b: {
-      name: 'Bishop', hp: 44, atk: 17, def: 11, spd: 19,
+      name: 'Bishop', hp: 55, atk: 18, def: 7, spd: 13,
       variantMoves: {
         Psychic: { type: 'Psychic', moves: ['Diagonal Slash', 'Pierce'], defMoves: ['Mind Shield', 'Prism Counter'] },
         Grass:   { type: 'Grass',   moves: ['Leaf Slash', 'Pierce'],     defMoves: ['Spore Guard', 'Prism Counter'] },
@@ -58,7 +60,7 @@
       },
     },
     r: {
-      name: 'Rook', hp: 62, atk: 20, def: 18, spd: 6,
+      name: 'Rook', hp: 55, atk: 15, def: 17, spd: 6,
       variantMoves: {
         Rock:  { type: 'Rock',  moves: ['Castle Crush', 'Siege Slam'], defMoves: ['Fortify', 'Rampart Smash'] },
         Water: { type: 'Water', moves: ['Tidal Slam', 'Siege Slam'],   defMoves: ['Aqua Barrier', 'Rampart Smash'] },
@@ -66,7 +68,7 @@
       },
     },
     q: {
-      name: 'Queen', hp: 82, atk: 26, def: 16, spd: 14,
+      name: 'Queen', hp: 55, atk: 18, def: 11, spd: 9,
       variantMoves: {
         Fire:    { type: 'Fire',    moves: ['Royal Flame', 'Court Sweep'],   defMoves: ['Imperial Guard', 'Majestic Counter'] },
         Water:   { type: 'Water',   moves: ['Hydro Surge', 'Court Sweep'],   defMoves: ['Aqua Aura', 'Majestic Counter'] },
@@ -76,7 +78,7 @@
       },
     },
     k: {
-      name: 'King', hp: 72, atk: 20, def: 20, spd: 10,
+      name: 'King', hp: 55, atk: 13, def: 18, spd: 7,
       variantMoves: {
         Dragon: { type: 'Dragon', moves: ["Sovereign's Wrath", 'Royal Decree'], defMoves: ['Royal Defiance', 'Desperate Stand'] },
         Fire:   { type: 'Fire',   moves: ['Royal Inferno', 'Royal Decree'],      defMoves: ['Blazing Guard', 'Desperate Stand'] },
