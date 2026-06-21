@@ -102,7 +102,6 @@ function buildAnnounceOverlay() {
   if (announceDom) return announceDom;
   const el = document.createElement('div');
   el.className = 'battle-announcement';
-  el.hidden = true;
   el.innerHTML = `
     <div class="announcement-card">
       <div class="announcement-combatants">
@@ -155,8 +154,6 @@ function showBattleAnnouncement(move) {
   const dest = Game.squareName(move.to);
   ad.notation.textContent = atkType === 'p' ? file + 'x' + dest : atkType.toUpperCase() + 'x' + dest;
 
-  ad.el.hidden = false;
-  void ad.el.offsetWidth; // force reflow so transition fires
   ad.el.classList.add('show');
 
   return new Promise((resolve) => {
@@ -165,10 +162,10 @@ function showBattleAnnouncement(move) {
       if (done) return;
       done = true;
       ad.el.classList.remove('show');
-      setTimeout(() => { ad.el.hidden = true; resolve(); }, 320);
+      setTimeout(resolve, 80);
     };
     ad.el.addEventListener('click', dismiss, { once: true });
-    setTimeout(dismiss, 1900);
+    setTimeout(dismiss, 2400);
   });
 }
 
@@ -747,6 +744,10 @@ function playMove(move) {
       .then((attackerWon) => {
         if (attackerWon) resolveWin(move);
         else resolveLoss(move);
+      })
+      .catch((err) => {
+        console.error('Battle error:', err);
+        resolveWin(move);
       });
   } else {
     resolveWin(move);

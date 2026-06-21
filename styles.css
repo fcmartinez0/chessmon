@@ -593,18 +593,16 @@ h1 {
 
 /* ── Battle Announcement Overlay ─────────────────────────────────────────── */
 .battle-announcement {
+  display: none;
   position: fixed;
   inset: 0;
   z-index: 300;
-  display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.72);
-  opacity: 0;
-  transition: opacity 0.22s ease;
+  background: rgba(0, 0, 0, 0.75);
   cursor: pointer;
 }
-.battle-announcement.show { opacity: 1; }
+.battle-announcement.show { display: flex; }
 
 .announcement-card {
   background: #1a1a2e;
@@ -613,13 +611,12 @@ h1 {
   padding: 32px 48px;
   text-align: center;
   box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 0 6px rgba(240,208,64,0.15);
-  transform: translateY(0);
-  animation: announceSlideIn 0.28s cubic-bezier(0.34,1.56,0.64,1) both;
+  animation: announceSlideIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 
 @keyframes announceSlideIn {
-  from { transform: scale(0.7) translateY(24px); opacity: 0; }
-  to   { transform: scale(1) translateY(0);      opacity: 1; }
+  from { transform: scale(0.6) translateY(30px); opacity: 0; }
+  to   { transform: scale(1)   translateY(0);    opacity: 1; }
 }
 
 .announcement-combatants {
